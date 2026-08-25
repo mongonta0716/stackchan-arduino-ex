@@ -1,0 +1,27 @@
+{
+  "name": "stackchan-arduino-ex",
+  "keywords": "stackchan, servo, easing, esp-idf, m5stack",
+  "description": "Extended Stack-chan servo/config library with a built-in Easing engine, a built-in YAML parser and native ESP-IDF support (no ServoEasing/YAMLDuino dependency).",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mongonta0716/stackchan-arduino-ex.git"
+  },
+  "authors": [
+    {
+      "name": "Takao Akaki",
+      "email": "takaoakaki@gmail.com",
+      "url": "https://mongonta0716.github.io/",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "dependencies": [],
+  "version": "0.1.0",
+  "frameworks": ["arduino", "espidf"],
+  "platforms": "espressif32",
+  "build": {
+    "srcFilter": ["+<*.cpp>", "+<*.c>", "+<drivers/*.cpp>"],
+    "flags": ["-std=gnu++17"],
+    "unflags": ["-std=gnu++11"]
+  }
+}

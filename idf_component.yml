@@ -1,0 +1,5 @@
+version: "0.1.0"
+description: "Extended Stack-chan servo/config library with built-in Easing, built-in YAML and native ESP-IDF support."
+url: "https://github.com/mongonta0716/stackchan-arduino-ex"
+dependencies:
+  idf: ">=5.0"

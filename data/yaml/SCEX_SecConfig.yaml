@@ -1,0 +1,10 @@
+# SCEX_SecConfig.yaml -- personal/secret settings, kept separate from
+# SCEX_BasicConfig.yaml so it can be excluded from version control.
+# Loaded only when SystemConfig::loadConfig()'s secret_yaml_path is non-empty.
+wifi:
+  ssid: ""
+  password: ""
+apikey:
+  stt: ""
+  aiservice: ""
+  tts: ""

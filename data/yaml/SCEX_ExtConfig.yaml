@@ -1,0 +1,7 @@
+# SCEX_ExtConfig.yaml -- example application-specific extension config.
+# Loaded only when SystemConfig::loadConfig()'s extend_yaml_path is
+# non-empty. Override SystemConfig::setExtendSettings() in a subclass (see
+# examples/arduino_basic) to parse fields like these.
+item1: "example"
+item2: 42
+item3: true

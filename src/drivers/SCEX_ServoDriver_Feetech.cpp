@@ -1,0 +1,233 @@
+#include "SCEX_ServoDriver_Feetech.h"
+
+#ifdef ESP_PLATFORM
+
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <memory>
+#include <vector>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_log.h"
+#include "SCEX_IOExpander.h"
+
+namespace SCEX {
+
+namespace {
+constexpr char kTag[] = "SCEX_Feetech";
+
+// Feetech SCS(CL) memory table (see header comment for provenance).
+constexpr uint8_t kAddrTorqueEnable = 40;
+constexpr uint8_t kAddrGoalPositionL = 42;
+constexpr uint8_t kAddrGoalTimeL = 44;
+constexpr uint8_t kAddrGoalSpeedL = 46;
+constexpr uint8_t kAddrPresentPositionL = 56;
+
+constexpr uint8_t kInstrPing = 0x01;
+constexpr uint8_t kInstrRead = 0x02;
+constexpr uint8_t kInstrWrite = 0x03;
+
+// Maps a [lower_limit, upper_limit] degree range onto the 0-1023 raw servo
+// range used by SCS0009 (0-300 degrees of physical travel).
+uint16_t degreeToRaw(float degree) {
+    float clamped = std::clamp(degree, 0.0f, 300.0f);
+    long pos = std::lround(clamped * 1023.0 / 300.0);
+    return static_cast<uint16_t>(std::clamp<long>(pos, 0, 1023));
+}
+
+float rawToDegree(int raw) {
+    return static_cast<float>(raw) * 300.0f / 1023.0f;
+}
+
+}  // namespace
+
+bool FeetechBus::begin(int pin_tx, int pin_rx, int baud) {
+    if (initialized_) {
+        return true;
+    }
+    pin_tx_ = pin_tx;
+    pin_rx_ = pin_rx;
+
+    uart_config_t cfg = {};
+    cfg.baud_rate = baud;
+    cfg.data_bits = UART_DATA_8_BITS;
+    cfg.parity = UART_PARITY_DISABLE;
+    cfg.stop_bits = UART_STOP_BITS_1;
+    cfg.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+    cfg.source_clk = UART_SCLK_DEFAULT;
+
+    if (uart_driver_install(port_, 256, 256, 0, nullptr, 0) != ESP_OK) {
+        ESP_LOGE(kTag, "uart_driver_install failed on port %d", port_);
+        return false;
+    }
+    if (uart_param_config(port_, &cfg) != ESP_OK ||
+        uart_set_pin(port_, pin_tx_, pin_rx_, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE) != ESP_OK) {
+        ESP_LOGE(kTag, "uart_param_config/uart_set_pin failed on port %d", port_);
+        return false;
+    }
+    initialized_ = true;
+    return true;
+}
+
+bool FeetechBus::sendPacket(uint8_t id, uint8_t instruction, const uint8_t* params, int param_len) {
+    if (!initialized_) return false;
+    uint8_t buf[8 + 32];
+    int idx = 0;
+    buf[idx++] = 0xFF;
+    buf[idx++] = 0xFF;
+    buf[idx++] = id;
+    uint8_t len = static_cast<uint8_t>(param_len + 2);
+    buf[idx++] = len;
+    buf[idx++] = instruction;
+    uint16_t sum = static_cast<uint16_t>(id) + len + instruction;
+    for (int i = 0; i < param_len; i++) {
+        buf[idx++] = params[i];
+        sum += params[i];
+    }
+    buf[idx++] = static_cast<uint8_t>(~sum & 0xFF);
+    uart_write_bytes(port_, reinterpret_cast<const char*>(buf), idx);
+    return true;
+}
+
+int FeetechBus::recvPacket(uint8_t expected_id, uint8_t* out_params, int max_params) {
+    const TickType_t deadline = xTaskGetTickCount() + pdMS_TO_TICKS(50);
+    int header_matches = 0;
+    while (xTaskGetTickCount() < deadline) {
+        uint8_t b;
+        if (uart_read_bytes(port_, &b, 1, pdMS_TO_TICKS(10)) <= 0) continue;
+        if (header_matches < 2) {
+            header_matches = (b == 0xFF) ? header_matches + 1 : 0;
+            continue;
+        }
+        header_matches = 0;
+        uint8_t id = b;
+        uint8_t len, error;
+        if (uart_read_bytes(port_, &len, 1, pdMS_TO_TICKS(20)) <= 0) continue;
+        if (uart_read_bytes(port_, &error, 1, pdMS_TO_TICKS(20)) <= 0) continue;
+        int param_len = static_cast<int>(len) - 2;
+        if (param_len < 0 || param_len > 32) continue;
+        uint8_t params[32] = {};
+        if (param_len > 0 && uart_read_bytes(port_, params, param_len, pdMS_TO_TICKS(20)) != param_len) {
+            continue;
+        }
+        uint8_t checksum;
+        if (uart_read_bytes(port_, &checksum, 1, pdMS_TO_TICKS(20)) <= 0) continue;
+        uint16_t sum = static_cast<uint16_t>(id) + len + error;
+        for (int i = 0; i < param_len; i++) sum += params[i];
+        if (static_cast<uint8_t>(~sum & 0xFF) != checksum) continue;
+        if (id != expected_id) continue;
+        if (out_params && param_len > 0) {
+            std::memcpy(out_params, params, std::min(param_len, max_params));
+        }
+        return param_len;
+    }
+    return -1;
+}
+
+bool FeetechBus::writeByte(uint8_t id, uint8_t addr, uint8_t value) {
+    uint8_t params[2] = {addr, value};
+    return sendPacket(id, kInstrWrite, params, 2);
+}
+
+bool FeetechBus::writeWords(uint8_t id, uint8_t addr, const uint16_t* values, int count) {
+    uint8_t params[1 + 2 * 8];
+    params[0] = addr;
+    for (int i = 0; i < count; i++) {
+        params[1 + 2 * i] = static_cast<uint8_t>(values[i] & 0xFF);
+        params[2 + 2 * i] = static_cast<uint8_t>((values[i] >> 8) & 0xFF);
+    }
+    return sendPacket(id, kInstrWrite, params, 1 + 2 * count);
+}
+
+int FeetechBus::readWord(uint8_t id, uint8_t addr) {
+    uint8_t params[2] = {addr, 2};
+    if (!sendPacket(id, kInstrRead, params, 2)) return -1;
+    uint8_t out[2];
+    if (recvPacket(id, out, 2) != 2) return -1;
+    return out[0] | (out[1] << 8);
+}
+
+bool FeetechBus::ping(uint8_t id) {
+    if (!sendPacket(id, kInstrPing, nullptr, 0)) return false;
+    return recvPacket(id, nullptr, 0) >= 0;
+}
+
+bool FeetechBus::writePosition(uint8_t id, uint16_t position, uint16_t time_ms, uint16_t speed) {
+    uint16_t values[3] = {position, time_ms, speed};
+    return writeWords(id, kAddrGoalPositionL, values, 3);
+}
+
+bool FeetechBus::enableTorque(uint8_t id, bool on) {
+    return writeByte(id, kAddrTorqueEnable, on ? 1 : 0);
+}
+
+int FeetechBus::readPosition(uint8_t id) {
+    return readWord(id, kAddrPresentPositionL);
+}
+
+namespace {
+std::vector<std::unique_ptr<FeetechBus>>& busRegistry() {
+    static std::vector<std::unique_ptr<FeetechBus>> registry;
+    return registry;
+}
+}  // namespace
+
+FeetechBus* getOrCreateFeetechBus(int pin_tx, int pin_rx) {
+    auto& registry = busRegistry();
+    for (auto& bus : registry) {
+        if (bus->pinTx() == pin_tx && bus->pinRx() == pin_rx) {
+            return bus.get();
+        }
+    }
+    auto bus = std::make_unique<FeetechBus>();
+    if (!bus->begin(pin_tx, pin_rx)) {
+        ESP_LOGE(kTag, "failed to start bus on tx=%d rx=%d", pin_tx, pin_rx);
+        return nullptr;
+    }
+    registry.push_back(std::move(bus));
+    return registry.back().get();
+}
+
+bool FeetechServoDriver::attach(const ServoAxisConfig& cfg) {
+    if (cfg.use_io_expander) {
+        IOExpander* expander = getOrCreateIOExpander(cfg.i2c_sda, cfg.i2c_scl, cfg.io_expander_addr);
+        if (expander == nullptr || !expander->setServoPower(true)) {
+            ESP_LOGE(kTag, "axis '%s': failed to power on servo rail via IOExpander", cfg.name.c_str());
+            return false;
+        }
+    }
+    bus_ = getOrCreateFeetechBus(cfg.pin_tx, cfg.pin_rx);
+    if (bus_ == nullptr) {
+        return false;
+    }
+    id_ = static_cast<uint8_t>(cfg.servo_id);
+    lower_limit_ = cfg.lower_limit;
+    upper_limit_ = cfg.upper_limit;
+    bus_->ping(id_);
+    writeAngle(static_cast<float>(cfg.start_degree));
+    return true;
+}
+
+void FeetechServoDriver::writeAngle(float degree) {
+    if (bus_ == nullptr) return;
+    degree = std::clamp(degree, static_cast<float>(lower_limit_), static_cast<float>(upper_limit_));
+    bus_->writePosition(id_, degreeToRaw(degree), 0);
+}
+
+float FeetechServoDriver::readAngle() {
+    if (bus_ == nullptr) return NAN;
+    int raw = bus_->readPosition(id_);
+    return raw < 0 ? NAN : rawToDegree(raw);
+}
+
+void FeetechServoDriver::setTorque(bool on) {
+    if (bus_ != nullptr) {
+        bus_->enableTorque(id_, on);
+    }
+}
+
+}  // namespace SCEX
+
+#endif  // ESP_PLATFORM

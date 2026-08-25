@@ -1,0 +1,75 @@
+# SCEX_BasicConfig.yaml -- stackchan-arduino-ex basic configuration.
+#
+# Parsed by SCEX_Yaml (src/SCEX_Yaml.h), a small dependency-free YAML
+# subset reader -- NOT full YAML. Supported: block mappings, block
+# sequences ("- item" / "- key: value" lists of maps), '#' comments,
+# quoted/bare scalars (string/int/float/bool/null). NOT supported: anchors
+# & aliases, flow style ([a,b] / {a:b}), multiple documents.
+#
+# Unlike stackchan-arduino's SC_BasicConfig.yaml (which hard-coded exactly
+# two servo axes under servo.pin.x/servo.pin.y etc.), servo.axes below is a
+# list: add or remove axes freely (e.g. a "jaw" axis) without any code
+# change -- SCEX_ServoManager registers one SCEX_ServoAxis per entry.
+
+servo:
+  axes:
+    # Default below is m5_scs (M5StackChan's Feetech SCS0009 servos behind a
+    # PY32IOExpander that switches the servo power rail). Both axes share one
+    # UART bus (pin_tx/pin_rx must match) and one I2C bus (i2c_sda/i2c_scl
+    # must match) -- SCEX_FeetechBus/SCEX_IOExpander dedupe by pin pair.
+    # UART rx:7 tx:6, I2C sda:12 scl:11 are the CoreS3-based official kit's
+    # pins; adjust if your board wires the servo bus differently.
+    #
+    # Other known signal-pin layouts (for driver: pwm / scs instead):
+    #   Core1  PortA x:22 y:21        PortC x:16 y:17
+    #   Core2  PortA x:33 y:32        PortC x:13 y:14
+    #   CoreS3 PortA x:2  y:1         PortB x:9  y:8   PortC x:17 y:18
+    #   Stack-chan PCB  Core1 x:5 y:2   Core2 x:19 y:27
+    #   RT version (Dynamixel, not yet ported): x:6 y:7
+    - name: x
+      driver: m5_scs             # pwm | scs | m5_scs
+      pin_tx: 6                   # shared UART TX pin
+      pin_rx: 7                   # shared UART RX pin
+      servo_id: 1                 # Feetech servo id on the bus (1-based)
+      offset: 0                   # +/- from start_degree at attach time
+      start_degree: 150           # initial position (SCS0009/M5StackChan: 150)
+      lower_limit: 0
+      upper_limit: 300
+      easing: quad_in_out         # see docs/api.md for the full easings.net-style list
+      i2c_sda: 12                  # PY32IOExpander bus (servo power rail)
+      i2c_scl: 11
+    - name: y
+      driver: m5_scs
+      pin_tx: 6
+      pin_rx: 7
+      servo_id: 2
+      offset: 0
+      start_degree: 90
+      lower_limit: 0
+      upper_limit: 90
+      easing: quad_in_out
+      i2c_sda: 12
+      i2c_scl: 11
+    # Example third axis (disabled by default) -- e.g. a mouth/jaw servo.
+    # Uncomment and adjust the pin to add it; SCEX_ServoManager.findAxis("jaw")
+    # picks it up automatically, no code changes needed elsewhere.
+    # - name: jaw
+    #   driver: pwm
+    #   pin_tx: 4
+    #   start_degree: 90
+    #   lower_limit: 60
+    #   upper_limit: 120
+    #   easing: sine_in_out
+  speed:
+    normal_mode:
+      interval_min: 3000
+      interval_max: 6000
+      move_min: 500
+      move_max: 1500
+    sing_mode:
+      interval_min: 500
+      interval_max: 1000
+      move_min: 500
+      move_max: 1000
+
+takao_base: false  # Whether to feed power from the rear connector (Stack-chan_Takao_Base https://ssci.to/8905)

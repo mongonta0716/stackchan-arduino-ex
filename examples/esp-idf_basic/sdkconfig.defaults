@@ -1,0 +1,5 @@
+# SCEX_BasicConfig.yaml's default servo.axes use m5_scs, wired on the
+# CoreS3-based (ESP32-S3) official kit -- `idf.py set-target esp32s3`.
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
