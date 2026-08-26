@@ -1,0 +1,46 @@
+# PWM servo example for two SG90 servos (x and y axes).
+#
+# Copy or rename this file to SCEX_BasicConfig.yaml before use.
+# The pins below use the M5Stack CoreS3 Port A layout (x: GPIO2, y: GPIO1).
+# Change pin_tx for your board and wiring:
+#   Core1  PortA x:22 y:21    PortC x:16 y:17
+#   Core2  PortA x:33 y:32    PortC x:13 y:14
+#   CoreS3 PortA x:2  y:1     PortB x:9  y:8    PortC x:17 y:18
+#
+# pin_tx is used as the PWM signal pin when driver is pwm. pin_rx,
+# servo_id, baud, and I2C settings are not required for PWM servos.
+# Power the SG90 servos from a suitable external 5 V supply and connect the
+# supply ground to the ESP32 ground. Do not power two servos directly from
+# an ESP32 GPIO pin.
+
+servo:
+  axes:
+    - name: x
+      driver: pwm
+      pin_tx: 2
+      offset: 0
+      start_degree: 90
+      lower_limit: 0
+      upper_limit: 180
+      easing: quad_in_out
+    - name: y
+      driver: pwm
+      pin_tx: 1
+      offset: 0
+      start_degree: 90
+      lower_limit: 0
+      upper_limit: 180
+      easing: quad_in_out
+  speed:
+    normal_mode:
+      interval_min: 3000
+      interval_max: 6000
+      move_min: 500
+      move_max: 1500
+    sing_mode:
+      interval_min: 500
+      interval_max: 1000
+      move_min: 500
+      move_max: 1000
+
+takao_base: false

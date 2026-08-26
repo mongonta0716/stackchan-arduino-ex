@@ -104,7 +104,7 @@ bool moveAll(DemoPosition position, uint32_t duration_ms, bool stop_on_touch) {
 // start_degree in parallel, using whatever easing type is selected. During
 // an automatic run, a screen touch stops the current move and remaining demos.
 bool playCurrentEasing(bool stop_on_touch = false) {
-    constexpr uint32_t kSwingMs = 1000;
+    constexpr uint32_t kSwingMs = 1500;
     return moveAll(DemoPosition::Upper, kSwingMs, stop_on_touch) &&
            moveAll(DemoPosition::Lower, kSwingMs, stop_on_touch) &&
            moveAll(DemoPosition::Start, kSwingMs, stop_on_touch);
