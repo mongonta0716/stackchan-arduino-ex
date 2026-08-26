@@ -31,7 +31,7 @@ public:
     bool setServoPower(bool on);
 
 private:
-    void writeBit(uint8_t reg_l, uint8_t reg_h, uint8_t pin, bool value);
+    bool writeBit(uint8_t reg_l, uint8_t reg_h, uint8_t pin, bool value);
 
     I2CBus* bus_ = nullptr;
     i2c_master_dev_handle_t dev_ = nullptr;

@@ -12,6 +12,7 @@
 # change -- SCEX_ServoManager registers one SCEX_ServoAxis per entry.
 
 servo:
+  baud: 500000                   # shared baud rate for all serial servo axes
   axes:
     # Default below is m5_scs (M5StackChan's Feetech SCS0009 servos behind a
     # PY32IOExpander that switches the servo power rail). Both axes share one
@@ -47,6 +48,18 @@ servo:
       start_degree: 90
       lower_limit: 0
       upper_limit: 90
+      easing: quad_in_out
+      i2c_sda: 12
+      i2c_scl: 11
+    - name: t
+      driver: m5_scs
+      pin_tx: 6
+      pin_rx: 7
+      servo_id: 3
+      offset: 0
+      start_degree: 135
+      lower_limit: 0
+      upper_limit: 270
       easing: quad_in_out
       i2c_sda: 12
       i2c_scl: 11

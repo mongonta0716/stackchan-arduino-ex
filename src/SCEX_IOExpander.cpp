@@ -7,6 +7,8 @@
 #include <utility>
 
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 namespace SCEX {
 
@@ -29,23 +31,28 @@ bool IOExpander::begin(I2CBus* bus, uint8_t addr) {
     dev_ = bus_->addDevice(addr);
     if (dev_ == nullptr) return false;
 
-    int version = bus_->readRegister8(dev_, kRegVersion);
-    if (version <= 0 || version == 0xFF) {
-        ESP_LOGE(kTag, "invalid version response: 0x%02X", version);
-        return false;
+    // PY32 may still be booting when the ESP32 reaches setup().  Match the
+    // reference board support and give it up to about 1.2 seconds.
+    for (int attempt = 0; attempt < 6; ++attempt) {
+        int version = bus_->readRegister8(dev_, kRegVersion);
+        if (version > 0 && version != 0xFF) {
+            ready_ = true;
+            return true;
+        }
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
-    ready_ = true;
-    return true;
+    ESP_LOGE(kTag, "IOExpander at 0x%02X did not become ready", addr);
+    return false;
 }
 
-void IOExpander::writeBit(uint8_t reg_l, uint8_t reg_h, uint8_t pin, bool value) {
-    if (!ready_) return;
+bool IOExpander::writeBit(uint8_t reg_l, uint8_t reg_h, uint8_t pin, bool value) {
+    if (!ready_) return false;
     uint8_t reg = pin < 8 ? reg_l : reg_h;
     uint8_t bit = 1u << (pin < 8 ? pin : pin - 8);
     int current = bus_->readRegister8(dev_, reg);
-    if (current < 0) return;
+    if (current < 0) return false;
     uint8_t updated = value ? (current | bit) : (current & ~bit);
-    bus_->writeRegister8(dev_, reg, updated);
+    return bus_->writeRegister8(dev_, reg, updated);
 }
 
 void IOExpander::setDirection(uint8_t pin, bool output) {
@@ -68,10 +75,15 @@ void IOExpander::digitalWrite(uint8_t pin, bool level) {
 
 bool IOExpander::setServoPower(bool on) {
     if (!ready_) return false;
-    setDirection(kServoPowerPin, true);
-    setPullMode(kServoPowerPin, true);
-    digitalWrite(kServoPowerPin, on);
-    return true;
+    const bool direction_ok =
+        writeBit(kRegGpioModeL, kRegGpioModeH, kServoPowerPin, true);
+    const bool pull_down_ok =
+        writeBit(kRegGpioPullDownL, kRegGpioPullDownH, kServoPowerPin, false);
+    const bool pull_up_ok =
+        writeBit(kRegGpioPullUpL, kRegGpioPullUpH, kServoPowerPin, true);
+    const bool output_ok =
+        writeBit(kRegGpioOutL, kRegGpioOutH, kServoPowerPin, on);
+    return direction_ok && pull_down_ok && pull_up_ok && output_ok;
 }
 
 namespace {

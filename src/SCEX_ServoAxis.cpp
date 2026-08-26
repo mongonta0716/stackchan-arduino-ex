@@ -13,6 +13,7 @@ bool ServoAxis::attach() {
     }
     current_degree_ = static_cast<float>(cfg_.start_degree);
     target_degree_ = current_degree_;
+    driver_->writeAngle(current_degree_ + cfg_.offset);
     return true;
 }
 

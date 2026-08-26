@@ -172,6 +172,8 @@ See `data/yaml/SCEX_BasicConfig.yaml`. Main differences from the original
   replaced by a `servo.axes` list (each entry self-contained: `name`,
   `driver`, `pin_tx`, `pin_rx`, `servo_id`, `offset`, `start_degree`,
   `lower_limit`, `upper_limit`, `easing`).
+- `servo.baud` selects the shared bus speed for all serial servos and defaults
+  to `1000000`.
 - `extend_config_filesize`/`secret_config_filesize` are gone -- the custom
   YAML parser reads the whole file, so ArduinoJson's fixed buffer-size
   hint is no longer needed.

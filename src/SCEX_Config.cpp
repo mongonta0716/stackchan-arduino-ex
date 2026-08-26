@@ -110,6 +110,7 @@ void SystemConfig::setDefaultParameters() {
 
 void SystemConfig::setSystemConfig(const YamlValue& doc) {
     const YamlValue& servo = doc["servo"];
+    const int servo_baud = static_cast<int>(servo["baud"].asInt(1000000));
 
     servo_axes_.clear();
     const YamlValue& axes = servo["axes"];
@@ -121,6 +122,7 @@ void SystemConfig::setSystemConfig(const YamlValue& doc) {
         axis.pin_tx = static_cast<int>(item["pin_tx"].asInt(-1));
         axis.pin_rx = static_cast<int>(item["pin_rx"].asInt(-1));
         axis.servo_id = static_cast<int>(item["servo_id"].asInt(static_cast<long>(i) + 1));
+        axis.baud = servo_baud;
         axis.offset = static_cast<int16_t>(item["offset"].asInt(0));
         axis.lower_limit = static_cast<int16_t>(item["lower_limit"].asInt(0));
         axis.upper_limit = static_cast<int16_t>(item["upper_limit"].asInt(180));
@@ -206,9 +208,11 @@ const ServoIntervalConfig* SystemConfig::servoInterval(const std::string& mode_n
 
 void SystemConfig::printAllParameters() const {
     for (const auto& axis : servo_axes_) {
-        ESP_LOGI(kTag, "axis '%s': driver=%s pin_tx=%d pin_rx=%d offset=%d limits=[%d,%d] start=%d",
-                 axis.name.c_str(), axis.driver_type.c_str(), axis.pin_tx, axis.pin_rx, axis.offset,
-                 axis.lower_limit, axis.upper_limit, axis.start_degree);
+        ESP_LOGI(kTag, "axis '%s': driver=%s pin_tx=%d pin_rx=%d id=%d baud=%d offset=%d "
+                       "limits=[%d,%d] start=%d",
+                 axis.name.c_str(), axis.driver_type.c_str(), axis.pin_tx, axis.pin_rx,
+                 axis.servo_id, axis.baud, axis.offset, axis.lower_limit, axis.upper_limit,
+                 axis.start_degree);
     }
     for (const auto& interval : servo_intervals_) {
         ESP_LOGI(kTag, "speed '%s': interval=[%u,%u] move=[%u,%u]", interval.mode_name.c_str(),

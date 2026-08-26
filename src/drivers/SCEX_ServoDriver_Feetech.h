@@ -38,6 +38,7 @@ public:
 
     int pinTx() const { return pin_tx_; }
     int pinRx() const { return pin_rx_; }
+    int baud() const { return baud_; }
 
 private:
     bool writeByte(uint8_t id, uint8_t addr, uint8_t value);
@@ -46,16 +47,19 @@ private:
     bool sendPacket(uint8_t id, uint8_t instruction, const uint8_t* params, int param_len);
     int recvPacket(uint8_t expected_id, uint8_t* out_params, int max_params);
 
-    uart_port_t port_ = UART_NUM_1;
+    // Match Arduino's Serial2, which is used by the proven M5StackChan
+    // implementation on GPIO6/GPIO7.
+    uart_port_t port_ = UART_NUM_2;
     int pin_tx_ = -1;
     int pin_rx_ = -1;
+    int baud_ = 0;
     bool initialized_ = false;
 };
 
 // Looks up (or creates) the FeetechBus for the given pin pair. Owned
 // statically for the lifetime of the program -- servo buses are never torn
 // down on an embedded target.
-FeetechBus* getOrCreateFeetechBus(int pin_tx, int pin_rx);
+FeetechBus* getOrCreateFeetechBus(int pin_tx, int pin_rx, int baud = 1000000);
 
 class FeetechServoDriver : public ServoDriver {
 public:

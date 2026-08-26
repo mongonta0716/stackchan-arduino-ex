@@ -28,6 +28,7 @@ struct ServoAxisConfig {
     int pin_tx = -1;
     int pin_rx = -1;  // Serial only.
     int servo_id = 1; // Serial protocol id (1-based), unused for PWM.
+    int baud = 1000000;  // Serial only. Axes sharing a bus must use the same baud rate.
 
     int16_t offset = 0;
     int16_t lower_limit = 0;

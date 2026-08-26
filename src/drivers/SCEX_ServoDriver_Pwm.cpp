@@ -73,7 +73,8 @@ bool PwmServoDriver::attach(const ServoAxisConfig& cfg) {
         return false;
     }
 
-    writeAngle(static_cast<float>(cfg.start_degree));
+    // ServoAxis::attach() drives the initial move to start_degree (+offset)
+    // right after this returns -- no need to duplicate it here.
     return true;
 }
 

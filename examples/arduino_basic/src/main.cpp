@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <SPIFFS.h>
+#include <esp_log.h>
 
 #include "StackchanServoEx.h"
 
@@ -12,6 +13,17 @@ using namespace SCEX;
 
 namespace {
 constexpr int kSdCsPin = 4;  // CoreS3 (and Core/Core2) SD card CS pin
+
+// CORE_DEBUG_LEVEL (the board-wide default) also gates Arduino/M5Unified's
+// own internal logging (SD, I2C-HAL, ...), so raising it to see our own
+// output floods the monitor with unrelated noise. Opt just this library's
+// tags into Info level instead -- independent of CORE_DEBUG_LEVEL.
+void enableLibraryLogging() {
+    for (const char* tag :
+         {"SCEX_Config", "SCEX_ServoManager", "SCEX_IOExpander", "SCEX_I2C", "SCEX_Feetech", "SCEX_PWM"}) {
+        esp_log_level_set(tag, ESP_LOG_INFO);
+    }
+}
 }  // namespace
 
 SystemConfig config;
@@ -19,6 +31,7 @@ ServoManager servos;
 
 void setup() {
     Serial.begin(115200);
+    enableLibraryLogging();
     delay(1000);
 
     // SystemConfig reads plain filesystem paths via fopen(); SD.begin() /
@@ -33,7 +46,8 @@ void setup() {
     if (!SPIFFS.begin(true)) {
         Serial.println("SPIFFS mount failed");
     }
-    config.loadConfig({"/sd/yaml/SCEX_BasicConfig.yaml", "/spiffs/yaml/SCEX_BasicConfig.yaml"});
+    config.loadConfig(
+        std::vector<std::string>{"/sd/yaml/SCEX_BasicConfig.yaml", "/spiffs/yaml/SCEX_BasicConfig.yaml"});
 
     for (const ServoAxisConfig& axis_cfg : config.servoAxes()) {
         auto driver = createServoDriver(axis_cfg.driver_type);

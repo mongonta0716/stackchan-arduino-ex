@@ -167,6 +167,7 @@ root["servo"]["axes"][0]["name"].asString();
 - `servo.pin.x`/`servo.pin.y` のような2軸決め打ちの構造を廃止し、
   `servo.axes` のリストに変更（各要素が `name`/`driver`/`pin_tx`/`pin_rx`/
   `servo_id`/`offset`/`start_degree`/`lower_limit`/`upper_limit`/`easing` を持つ）。
+- `servo.baud` は全シリアルサーボ共通の通信速度。省略時は `1000000`。
 - `extend_config_filesize`/`secret_config_filesize` は廃止（独自 YAML
   パーサはファイル全体を読むため、ArduinoJson の固定バッファサイズ指定が
   不要になったため）。
