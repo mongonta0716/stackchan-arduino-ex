@@ -1,5 +1,7 @@
 # stackchan-arduino-ex
 
+English | [日本語](README.md)
+
 An extended Stack-chan servo/config library modeled on
 [stackchan-arduino](https://github.com/stack-chan/stackchan-arduino).
 
@@ -36,7 +38,7 @@ src/                   the library
   SCEX_I2CBus.* / SCEX_IOExpander.*   m5_scs servo-power-rail control
 data/yaml/                    sample SCEX_BasicConfig.yaml etc.
 examples/arduino_basic/       PlatformIO (Arduino) example
-examples/arduino_easing_demo/ step through easing patterns one Button A press at a time (uses M5Unified)
+examples/arduino_easing_demo/ play with Button A and select patterns with Button C (uses M5Unified)
 examples/esp-idf_basic/       plain ESP-IDF (idf.py) example
 test/                         host-side unit tests for Easing/Yaml (test/run_native_tests.sh)
 ```
@@ -78,10 +80,11 @@ void setup() {
 See [examples/arduino_basic](examples/arduino_basic) for the full example.
 
 To compare all 31 easing patterns side by side, use
-[examples/arduino_easing_demo](examples/arduino_easing_demo): each press of
-CoreS3's Button A switches to the next pattern, swings axis:x between
-lower_limit and upper_limit, and shows the current pattern's name centered
-on the display.
+[examples/arduino_easing_demo](examples/arduino_easing_demo). Button C selects
+the pattern shown on the display, and Button A plays the currently displayed
+pattern. Every configured axis swings between lower_limit and upper_limit,
+then returns to start_degree. Hold Button B for two seconds to play every
+remaining pattern from the one currently displayed through the last one.
 
 ## Usage (plain ESP-IDF)
 
@@ -102,6 +105,31 @@ test/run_native_tests.sh
 
 Builds and runs the hardware-independent `SCEX_Easing` / `SCEX_Yaml` tests
 with the host g++.
+
+## License
+
+This library is released under the [MIT License](LICENSE).
+
+Copyright (c) 2026 Takao Akaki
+
+## References and acknowledgements
+
+This library draws on the design, APIs, and behavior of the following projects
+and resources. It neither links nor bundles these libraries as dependencies;
+`SCEX_Easing` and `SCEX_Yaml` are original implementations in this project.
+
+- [stackchan-arduino](https://github.com/stack-chan/stackchan-arduino) —
+  Stack-chan servo-control and configuration APIs and the configuration-file
+  structure (MIT License)
+- [ServoEasing](https://github.com/ArminJo/ServoEasing) —
+  servo interpolation APIs and easing behavior (GPL-3.0-or-later)
+- [YAMLDuino](https://github.com/tobozo/YAMLDuino) —
+  the design of loading YAML configuration in an Arduino environment
+  (MIT License)
+- [SCServo (mongonta0716 fork)](https://github.com/mongonta0716/SCServo) —
+  the Feetech SCS(CL) protocol packet format and register layout (MIT License)
+- [easings.net](https://easings.net/) —
+  easing-curve names, formulas, and behavior
 
 ## Key differences from stackchan-arduino
 

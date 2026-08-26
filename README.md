@@ -1,5 +1,7 @@
 # stackchan-arduino-ex
 
+[English](README_en.md) | 日本語
+
 [stackchan-arduino](https://github.com/stack-chan/stackchan-arduino) を参考にした、拡張APIを持つ Stack-chan サーボ/設定ライブラリです。
 
 - **依存ゼロ**: ServoEasing / YAMLDuino / ESP32Servo / ArduinoJson / SCServo に依存しません。
@@ -31,7 +33,7 @@ src/                   ライブラリ本体
   SCEX_I2CBus.* / SCEX_IOExpander.*   m5_scs 用の電源制御
 data/yaml/                    SCEX_BasicConfig.yaml など設定ファイルのサンプル
 examples/arduino_basic/       PlatformIO (Arduino) サンプル
-examples/arduino_easing_demo/ ボタンAでイージングパターンを1つずつ確認できるデモ (M5Unified使用)
+examples/arduino_easing_demo/ ボタンAで再生、ボタンCでパターンを選択するデモ (M5Unified使用)
 examples/esp-idf_basic/       素のESP-IDF (idf.py) サンプル
 test/                         Easing/YAMLパーサのホスト単体テスト (test/run_native_tests.sh)
 ```
@@ -74,8 +76,9 @@ void setup() {
 
 31種類すべてのイージングパターンを1つずつ見比べたい場合は
 [examples/arduino_easing_demo](examples/arduino_easing_demo) を使ってください。
-CoreS3のボタンAを押すたびに次のパターンに切り替わり、axis:xが
-lower_limitとupper_limitの間を往復し、画面中央に現在のパターン名が表示されます。
+ボタンCで画面に表示するパターンを切り替え、ボタンAで現在表示されているパターンを実行します。
+設定されたすべての軸がlower_limitとupper_limitの間を往復してstart_degreeに戻ります。
+ボタンBを2秒間長押しすると、現在表示されているパターンから最後まで連続実行します。
 
 ## 使い方（素の ESP-IDF）
 
@@ -95,6 +98,29 @@ test/run_native_tests.sh
 ```
 
 ハードウェアに依存しない `SCEX_Easing` / `SCEX_Yaml` をホストの g++ でビルド・実行します。
+
+## ライセンス
+
+本ライブラリは [MIT License](LICENSE) で公開されています。
+
+Copyright (c) 2026 Takao Akaki
+
+## 参考・謝辞
+
+本ライブラリは、以下のプロジェクトおよび資料の設計、API、動作を参考にしています。
+各ライブラリを依存関係としてリンクまたは同梱しているものではなく、
+`SCEX_Easing` と `SCEX_Yaml` は本プロジェクト独自の実装です。
+
+- [stackchan-arduino](https://github.com/stack-chan/stackchan-arduino) —
+  Stack-chanのサーボ制御・設定APIと設定ファイル構成（MIT License）
+- [ServoEasing](https://github.com/ArminJo/ServoEasing) —
+  サーボ補間APIとイージング動作（GPL-3.0-or-later）
+- [YAMLDuino](https://github.com/tobozo/YAMLDuino) —
+  Arduino環境でYAML設定を読み込む設計（MIT License）
+- [SCServo（mongonta0716 fork）](https://github.com/mongonta0716/SCServo) —
+  Feetech SCS(CL)プロトコルのパケット形式とレジスタ構成（MIT License）
+- [easings.net](https://easings.net/) —
+  イージング曲線の名称、数式および挙動
 
 ## stackchan-arduino からの主な変更点
 
