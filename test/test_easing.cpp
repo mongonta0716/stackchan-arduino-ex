@@ -8,7 +8,7 @@ void test_boundaries_are_0_and_1() {
     EasingType types[] = {
         EasingType::Linear, EasingType::SineInOut, EasingType::QuadInOut, EasingType::CubicInOut,
         EasingType::QuartInOut, EasingType::QuintInOut, EasingType::ExpoInOut, EasingType::CircInOut,
-        EasingType::BackInOut, EasingType::ElasticInOut, EasingType::BounceInOut,
+        EasingType::BackInOut,
     };
     for (EasingType t : types) {
         SCEX_ASSERT_NEAR(0.0, ease(t, 0.0f), 0.001);
@@ -29,21 +29,22 @@ void test_default_easing_is_quad_in_out() {
 
 void test_easing_type_from_name() {
     SCEX_ASSERT_TRUE(easingTypeFromName("quad_in_out") == EasingType::QuadInOut);
-    SCEX_ASSERT_TRUE(easingTypeFromName("bounce_out") == EasingType::BounceOut);
-    SCEX_ASSERT_TRUE(easingTypeFromName("elastic_in") == EasingType::ElasticIn);
+    SCEX_ASSERT_TRUE(easingTypeFromName("back_out") == EasingType::BackOut);
+    SCEX_ASSERT_TRUE(easingTypeFromName("bounce_out") == kDefaultEasingType);
+    SCEX_ASSERT_TRUE(easingTypeFromName("elastic_in") == kDefaultEasingType);
     SCEX_ASSERT_TRUE(easingTypeFromName("does_not_exist") == kDefaultEasingType);
     SCEX_ASSERT_TRUE(easingTypeFromName(nullptr) == kDefaultEasingType);
 }
 
 void test_easing_type_name_round_trips_through_all_types() {
-    SCEX_ASSERT_EQ_INT(31, kEasingTypeCount);
+    SCEX_ASSERT_EQ_INT(25, kEasingTypeCount);
     for (int i = 0; i < kEasingTypeCount; i++) {
         EasingType type = kAllEasingTypes[i];
         const char* name = easingTypeName(type);
         SCEX_ASSERT_TRUE(easingTypeFromName(name) == type);
     }
     SCEX_ASSERT_EQ_STR("quad_in_out", easingTypeName(EasingType::QuadInOut));
-    SCEX_ASSERT_EQ_STR("bounce_out", easingTypeName(EasingType::BounceOut));
+    SCEX_ASSERT_EQ_STR("back_out", easingTypeName(EasingType::BackOut));
 }
 
 int main() {

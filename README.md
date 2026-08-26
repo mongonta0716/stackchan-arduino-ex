@@ -14,7 +14,7 @@
   `SCEX_BasicConfig.yaml` の `servo.axes` リストで軸を定義します。軸を増やすには
   yaml にエントリを1つ足すだけです。
 - **easings.net 相当のイージング**: `ServoManager::setEasingType(axis, EasingType)` で
-  軸ごとに31種類のイージングタイプを指定できます（デフォルト: `QuadInOut`）。
+  軸ごとに25種類のイージングタイプを指定できます（デフォルト: `QuadInOut`）。
 
 詳細は [docs/api.md](docs/api.md)（日本語）/ [docs/api_en.md](docs/api_en.md)（English）、
 移植方針の詳細は [docs/porting_notes.md](docs/porting_notes.md) を参照してください。
@@ -74,7 +74,7 @@ void setup() {
 
 完全な例は [examples/arduino_basic](examples/arduino_basic) を参照してください。
 
-31種類すべてのイージングパターンを1つずつ見比べたい場合は
+25種類すべてのイージングパターンを1つずつ見比べたい場合は
 [examples/arduino_easing_demo](examples/arduino_easing_demo) を使ってください。
 ボタンCで画面に表示するパターンを切り替え、ボタンAで現在表示されているパターンを実行します。
 設定されたすべての軸がlower_limitとupper_limitの間を往復してstart_degreeに戻ります。

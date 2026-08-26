@@ -18,7 +18,7 @@ An extended Stack-chan servo/config library modeled on
   AXIS_Y}` -- axes are defined by `SCEX_BasicConfig.yaml`'s `servo.axes`
   list. Adding an axis is one more yaml entry.
 - **easings.net-style easing**: `ServoManager::setEasingType(axis,
-  EasingType)` picks one of 31 curves per axis (default: `QuadInOut`).
+  EasingType)` picks one of 25 curves per axis (default: `QuadInOut`).
 
 See [docs/api_en.md](docs/api_en.md) (English) /
 [docs/api.md](docs/api.md) (日本語) for the full API, and
@@ -79,7 +79,7 @@ void setup() {
 
 See [examples/arduino_basic](examples/arduino_basic) for the full example.
 
-To compare all 31 easing patterns side by side, use
+To compare all 25 easing patterns side by side, use
 [examples/arduino_easing_demo](examples/arduino_easing_demo). Button C selects
 the pattern shown on the display, and Button A plays the currently displayed
 pattern. Every configured axis swings between lower_limit and upper_limit,

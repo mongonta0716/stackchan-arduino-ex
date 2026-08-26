@@ -14,22 +14,20 @@ enum class EasingType {
     ExpoIn, ExpoOut, ExpoInOut,
     CircIn, CircOut, CircInOut,
     BackIn, BackOut, BackInOut,
-    ElasticIn, ElasticOut, ElasticInOut,
-    BounceIn, BounceOut, BounceInOut,
 };
 
 // Default easing type used when a ServoAxis does not specify one.
 constexpr EasingType kDefaultEasingType = EasingType::QuadInOut;
 
-// Total number of EasingType values (Linear + the 30 easings.net curves).
-constexpr int kEasingTypeCount = 31;
+// Total number of EasingType values (Linear + 24 easings.net curves).
+constexpr int kEasingTypeCount = 25;
 
 // All EasingType values in declaration order -- e.g. to cycle through them
 // one at a time in a demo. Defined in SCEX_Easing.cpp.
 extern const EasingType kAllEasingTypes[kEasingTypeCount];
 
-// t must be in [0, 1]. Returns the eased progress; Back/Elastic can
-// momentarily leave [0, 1] (overshoot), which is expected.
+// t must be in [0, 1]. Returns the eased progress; Back can momentarily
+// leave [0, 1] (overshoot), which is expected.
 float ease(EasingType type, float t);
 
 // Parses one of the SCEX_BasicConfig.yaml easing names (e.g. "quad_in_out")

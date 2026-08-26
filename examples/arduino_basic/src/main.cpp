@@ -65,7 +65,7 @@ void setup() {
     // The API requested for this library: setEasingType(axis, EasingType),
     // one of the easings.net curves (SCEX_Easing.h). Default is QuadInOut.
     servos.setEasingType(x, EasingType::BackInOut);
-    servos.setEasingType(y, EasingType::BounceOut);
+    servos.setEasingType(y, EasingType::SineOut);
 
     servos.moveTo(x, 45.0f, y, 60.0f, 1000);
     playMotion(servos, MotionPreset::Greet);

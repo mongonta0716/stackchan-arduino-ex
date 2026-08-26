@@ -1,0 +1,4 @@
+dependencies:
+  stackchan-arduino-ex:
+    git: https://github.com/mongonta0716/stackchan-arduino-ex
+    path: .

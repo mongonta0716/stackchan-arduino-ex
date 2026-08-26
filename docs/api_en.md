@@ -99,7 +99,7 @@ axis) is enough -- no code changes.
 
 ### 3. `SCEX::EasingType` / `SCEX::ease()` (`SCEX_Easing.h`)
 
-The 30 [easings.net](https://easings.net/) curves plus `Linear` = 31 total.
+The 24 supported [easings.net](https://easings.net/) curves plus `Linear` = 25 total.
 
 ```
 Linear
@@ -111,14 +111,12 @@ QuintIn / QuintOut / QuintInOut
 ExpoIn / ExpoOut / ExpoInOut
 CircIn / CircOut / CircInOut
 BackIn / BackOut / BackInOut
-ElasticIn / ElasticOut / ElasticInOut
-BounceIn / BounceOut / BounceInOut
 ```
 
 Set per-axis with `ServoManager::setEasingType(axis, EasingType::BackInOut)`.
 Falls back to `kDefaultEasingType` (`QuadInOut`) when never set.
 
-In yaml, use the snake_case name (`quad_in_out`, `bounce_out`, ...) under
+In yaml, use the snake_case name (`quad_in_out`, `back_out`, ...) under
 `easing:`; `easingTypeFromName()` converts it.
 
 ### 4. `SCEX::ServoDriver` (`SCEX_ServoDriver.h`) / `createServoDriver()`

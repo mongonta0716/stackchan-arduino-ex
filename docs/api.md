@@ -98,7 +98,7 @@ servos.begin();
 
 ### 3. `SCEX::EasingType` / `SCEX::ease()` (`SCEX_Easing.h`)
 
-[easings.net](https://easings.net/) 相当の30種 + `Linear` = 31種類。
+[easings.net](https://easings.net/) 相当の24種 + `Linear` = 25種類。
 
 ```
 Linear
@@ -110,14 +110,12 @@ QuintIn / QuintOut / QuintInOut
 ExpoIn / ExpoOut / ExpoInOut
 CircIn / CircOut / CircInOut
 BackIn / BackOut / BackInOut
-ElasticIn / ElasticOut / ElasticInOut
-BounceIn / BounceOut / BounceInOut
 ```
 
 `ServoManager::setEasingType(axis, EasingType::BackInOut)` のように軸ごとに指定します。
 未指定の場合は `kDefaultEasingType`（`QuadInOut`）が使われます。
 
-yaml の `easing:` フィールドはスネークケース名（`quad_in_out`, `bounce_out` 等）で指定し、
+yaml の `easing:` フィールドはスネークケース名（`quad_in_out`, `back_out` 等）で指定し、
 `easingTypeFromName()` で変換されます。
 
 ### 4. `SCEX::ServoDriver` (`SCEX_ServoDriver.h`) / `createServoDriver()`

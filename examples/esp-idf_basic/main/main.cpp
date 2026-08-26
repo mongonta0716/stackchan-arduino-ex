@@ -46,7 +46,7 @@ extern "C" void app_main(void) {
     // setEasingType(axis, EasingType) -- one of the easings.net curves
     // (SCEX_Easing.h); default is QuadInOut.
     servos.setEasingType(x, EasingType::BackInOut);
-    servos.setEasingType(y, EasingType::BounceOut);
+    servos.setEasingType(y, EasingType::SineOut);
 
     servos.moveTo(x, 45.0f, y, 60.0f, 1000);
     playMotion(servos, MotionPreset::Greet);

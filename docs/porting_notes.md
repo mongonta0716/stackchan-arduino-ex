@@ -15,7 +15,7 @@ cover.
 
 | Library | Why it was Arduino-only | What replaced it |
 |---|---|---|
-| **ServoEasing** (arminjo) | Built on Arduino `Timer`/ISR APIs and a custom Ticker abstraction. | `SCEX_Easing.h/.cpp` -- a from-scratch implementation of the [easings.net](https://easings.net/) curve family (31 types), driven by a plain FreeRTOS task in `SCEX_ServoManager` instead of a hardware-timer ISR. |
+| **ServoEasing** (arminjo) | Built on Arduino `Timer`/ISR APIs and a custom Ticker abstraction. | `SCEX_Easing.h/.cpp` -- a from-scratch implementation of 25 types from the [easings.net](https://easings.net/) curve family, driven by a plain FreeRTOS task in `SCEX_ServoManager` instead of a hardware-timer ISR. |
 | **ESP32Servo** (madhephaestus) | Thin Arduino wrapper around `ledcWrite`. | `SCEX_ServoDriver_Pwm` calls `driver/ledc.h` directly. |
 | **YAMLDuino** (tobozo) | Wraps `libyaml` behind Arduino `Stream`/`File` APIs. | `SCEX_Yaml.h/.cpp` -- a small dependency-free parser for the YAML subset actually needed by a config file (see its header comment for exactly what's supported/unsupported). |
 | **ArduinoJson** (bblanchon) | Not actually Arduino-only (portable C++), but no longer needed once config parsing produces `SCEX::YamlValue` trees directly instead of round-tripping through a JSON document. | `SCEX::YamlValue` (part of `SCEX_Yaml.h`). |

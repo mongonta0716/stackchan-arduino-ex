@@ -9,23 +9,6 @@ namespace {
 
 constexpr float kPi = 3.14159265358979323846f;
 
-float bounceOut(float t) {
-    constexpr float n1 = 7.5625f;
-    constexpr float d1 = 2.75f;
-    if (t < 1.0f / d1) {
-        return n1 * t * t;
-    } else if (t < 2.0f / d1) {
-        t -= 1.5f / d1;
-        return n1 * t * t + 0.75f;
-    } else if (t < 2.5f / d1) {
-        t -= 2.25f / d1;
-        return n1 * t * t + 0.9375f;
-    } else {
-        t -= 2.625f / d1;
-        return n1 * t * t + 0.984375f;
-    }
-}
-
 float sineIn(float t) { return 1.0f - std::cos((t * kPi) / 2.0f); }
 float sineOut(float t) { return std::sin((t * kPi) / 2.0f); }
 float sineInOut(float t) { return -(std::cos(kPi * t) - 1.0f) / 2.0f; }
@@ -89,34 +72,6 @@ float backInOut(float t) {
                      2.0f;
 }
 
-float elasticIn(float t) {
-    constexpr float c4 = (2.0f * kPi) / 3.0f;
-    if (t == 0.0f) return 0.0f;
-    if (t == 1.0f) return 1.0f;
-    return -std::pow(2.0f, 10.0f * t - 10.0f) * std::sin((t * 10.0f - 10.75f) * c4);
-}
-float elasticOut(float t) {
-    constexpr float c4 = (2.0f * kPi) / 3.0f;
-    if (t == 0.0f) return 0.0f;
-    if (t == 1.0f) return 1.0f;
-    return std::pow(2.0f, -10.0f * t) * std::sin((t * 10.0f - 0.75f) * c4) + 1.0f;
-}
-float elasticInOut(float t) {
-    constexpr float c5 = (2.0f * kPi) / 4.5f;
-    if (t == 0.0f) return 0.0f;
-    if (t == 1.0f) return 1.0f;
-    return t < 0.5f
-               ? -(std::pow(2.0f, 20.0f * t - 10.0f) * std::sin((20.0f * t - 11.125f) * c5)) / 2.0f
-               : (std::pow(2.0f, -20.0f * t + 10.0f) * std::sin((20.0f * t - 11.125f) * c5)) / 2.0f +
-                     1.0f;
-}
-
-float bounceIn(float t) { return 1.0f - bounceOut(1.0f - t); }
-float bounceInOut(float t) {
-    return t < 0.5f ? (1.0f - bounceOut(1.0f - 2.0f * t)) / 2.0f
-                     : (1.0f + bounceOut(2.0f * t - 1.0f)) / 2.0f;
-}
-
 struct NamedEasingType {
     const char* name;
     EasingType type;
@@ -131,8 +86,6 @@ constexpr NamedEasingType kNamedEasingTypes[] = {
     {"expo_in", EasingType::ExpoIn}, {"expo_out", EasingType::ExpoOut}, {"expo_in_out", EasingType::ExpoInOut},
     {"circ_in", EasingType::CircIn}, {"circ_out", EasingType::CircOut}, {"circ_in_out", EasingType::CircInOut},
     {"back_in", EasingType::BackIn}, {"back_out", EasingType::BackOut}, {"back_in_out", EasingType::BackInOut},
-    {"elastic_in", EasingType::ElasticIn}, {"elastic_out", EasingType::ElasticOut}, {"elastic_in_out", EasingType::ElasticInOut},
-    {"bounce_in", EasingType::BounceIn}, {"bounce_out", EasingType::BounceOut}, {"bounce_in_out", EasingType::BounceInOut},
 };
 static_assert(sizeof(kNamedEasingTypes) / sizeof(kNamedEasingTypes[0]) == kEasingTypeCount,
               "kNamedEasingTypes must list every EasingType exactly once");
@@ -149,8 +102,6 @@ const EasingType kAllEasingTypes[kEasingTypeCount] = {
     EasingType::ExpoIn, EasingType::ExpoOut, EasingType::ExpoInOut,
     EasingType::CircIn, EasingType::CircOut, EasingType::CircInOut,
     EasingType::BackIn, EasingType::BackOut, EasingType::BackInOut,
-    EasingType::ElasticIn, EasingType::ElasticOut, EasingType::ElasticInOut,
-    EasingType::BounceIn, EasingType::BounceOut, EasingType::BounceInOut,
 };
 
 float ease(EasingType type, float t) {
@@ -180,12 +131,6 @@ float ease(EasingType type, float t) {
         case EasingType::BackIn: return backIn(t);
         case EasingType::BackOut: return backOut(t);
         case EasingType::BackInOut: return backInOut(t);
-        case EasingType::ElasticIn: return elasticIn(t);
-        case EasingType::ElasticOut: return elasticOut(t);
-        case EasingType::ElasticInOut: return elasticInOut(t);
-        case EasingType::BounceIn: return bounceIn(t);
-        case EasingType::BounceOut: return bounceOut(t);
-        case EasingType::BounceInOut: return bounceInOut(t);
     }
     return t;
 }

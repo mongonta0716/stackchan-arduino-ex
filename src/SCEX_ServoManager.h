@@ -11,7 +11,7 @@ namespace SCEX {
 // Owns a variable-length set of ServoAxis instances and a single background
 // FreeRTOS task that ticks every active interpolation (replaces the
 // ServoEasing Ticker/ISR mechanism from stackchan-arduino, uniformly for
-// every driver type -- PWM and serial axes get the same 31 easing curves).
+// every driver type -- PWM and serial axes get the same 25 easing curves).
 //
 // Axes are looked up by name, not by a fixed X/Y enum, so adding a new axis
 // (e.g. "jaw") is just one more addAxis() call / one more entry in

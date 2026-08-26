@@ -1,6 +1,6 @@
 // Easing pattern demo. Button A plays the SCEX_Easing.h curve currently
-// shown on the display. Button C advances to the next curve (all 31: Linear
-// + the 30 easings.net types) without playing it. Holding Button B for two
+// shown on the display. Button C advances to the next curve (all 25: Linear
+// + the 24 supported easings.net types) without playing it. Holding Button B for two
 // seconds plays every curve from the current one through the last one.
 #include <M5Unified.h>
 #include <SD.h>
