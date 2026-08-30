@@ -66,12 +66,19 @@ private:
     bool moving_ = false;
 
     // Set while the current move is running as native firmware-timed
-    // segments (see setNativeTimedMove). seg_sent_ counts the waypoints
-    // already handed to the driver; each covers seg_duration_ms_.
+    // segments (see setNativeTimedMove). The segment count is chosen per
+    // move from span, duration and the servo's own resolution so a shorter
+    // or slower move gets more, finer waypoints. seg_sent_ tracks how many
+    // segment boundaries the scheduler has reached; seg_emitted_ the last
+    // one actually written (a deadband skips waypoints the servo could not
+    // tell apart), so its goal time spans back to seg_emitted_.
     bool timed_mode_ = false;
     uint8_t seg_count_ = 0;
     uint8_t seg_sent_ = 0;
+    uint8_t seg_emitted_ = 0;
     uint32_t seg_duration_ms_ = 0;
+    float seg_res_deg_ = 0.1f;
+    int32_t seg_last_quant_ = 0;
 };
 
 }  // namespace SCEX

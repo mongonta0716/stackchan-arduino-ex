@@ -126,11 +126,22 @@ For a small-distance, long-duration move the per-20ms-tick step falls below the
 servo's position resolution (~0.29 deg on the SCS0009), so it repeatedly
 "sits still, then jumps one step" -- visible stutter.
 
-With `native_timed_move` (on by default), `ServoAxis` splits the move into a few
-easing-curve waypoints (~one per 150 ms, up to 16) and lets the servo interpolate
-each segment with its "goal position + goal time" feature. The servo paces its
-own coarse steps evenly across each segment, so the motion reads smoothly and the
-redundant bus writes disappear.
+With `native_timed_move` (on by default), `ServoAxis` splits the move into
+easing-curve waypoints and lets the servo interpolate each segment with its
+"goal position + goal time" feature. The servo paces its own coarse steps evenly
+across each segment, so the motion reads smoothly and the redundant bus writes
+disappear.
+
+**The segment count is adaptive:**
+
+- Target is roughly one waypoint per servo resolution step
+  (`ServoDriver::positionResolutionDeg()`, ~0.29 deg on the SCS0009), so a
+  smaller-distance / longer-duration move gets more, finer segments.
+- Each segment is still bounded to 35-150 ms (never flood the bus on a fast
+  move, never leave a slow move without a fresh goal).
+- Deadband: a waypoint whose quantized position equals the previous one is not
+  sent; the next real write's goal time covers the skipped span (write only
+  when the servo actually moves).
 
 - Ignored on PWM axes (`ServoDriver::supportsTimedMove()` is `false`).
 - yaml: `servo.axes[].native_timed_move: true|false`; runtime:
@@ -153,6 +164,7 @@ class ServoDriver {
     // Default false => ServoAxis calls writeAngle() every tick.
     virtual bool supportsTimedMove() const { return false; }
     virtual void writeTimedMove(float degree, uint32_t duration_ms) { writeAngle(degree); }
+    virtual float positionResolutionDeg() const { return 0.1f; }  // sizes the segment count
 };
 ```
 

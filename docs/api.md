@@ -125,9 +125,19 @@ yaml の `easing:` フィールドはスネークケース名（`quad_in_out`, `
 （SCS0009 は約 0.29°）を下回り、「止まる→1段ジャンプ」を繰り返してカクカクします。
 
 `native_timed_move`（デフォルト有効）を使うと、`ServoAxis` は移動をイージング曲線上の
-数点（約 150ms ごと、最大 16 分割）のウェイポイントに分割し、各区間を SCS の
-「ゴール位置 + ゴール時間」機能でサーボ自身に補間させます。サーボは区間内を内部レートで
-細かく等間隔に刻むため、ガタつきが目立たなくなり、冗長なバス書き込みも消えます。
+ウェイポイントに分割し、各区間を SCS の「ゴール位置 + ゴール時間」機能でサーボ自身に
+補間させます。サーボは区間内を内部レートで細かく等間隔に刻むため、ガタつきが目立たなく
+なり、冗長なバス書き込みも消えます。
+
+**分割数は自動可変**です:
+
+- 目安は「1 ウェイポイント ≒ サーボ 1 分解能ステップ」（分解能は
+  `ServoDriver::positionResolutionDeg()`。SCS0009 は約 0.29°）。
+  → 移動量が小さい / 移動時間が長いほど分割が細かくなります。
+- ただし 1 区間の時間は 35〜150ms に収める（速い大きな移動でバスを溢れさせず、
+  遅い移動でもサーボが目標を見失わない範囲）。
+- デッドバンド: 量子化後の位置が前回と同じウェイポイントは送信をスキップし、
+  次の実送信のゴール時間にスキップ分をまとめます（＝実際に動く時だけ書く）。
 
 - PWM 軸では無視されます（`ServoDriver::supportsTimedMove()` が `false`）。
 - yaml: `servo.axes[].native_timed_move: true|false`、実行時: `setNativeTimedMove(axis, on)`。
@@ -149,6 +159,7 @@ class ServoDriver {
     // 既定は false = ServoAxis がティックごとに writeAngle() を呼ぶ。
     virtual bool supportsTimedMove() const { return false; }
     virtual void writeTimedMove(float degree, uint32_t duration_ms) { writeAngle(degree); }
+    virtual float positionResolutionDeg() const { return 0.1f; }  // 分割数の自動調整に使用
 };
 ```
 

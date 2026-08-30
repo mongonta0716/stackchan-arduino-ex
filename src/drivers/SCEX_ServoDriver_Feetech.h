@@ -73,6 +73,8 @@ public:
     // in the base class).
     bool supportsTimedMove() const override { return true; }
     void writeTimedMove(float degree, uint32_t duration_ms) override;
+    // SCS0009/SCSCL position register is 0..1023 over 300 deg.
+    float positionResolutionDeg() const override { return 300.0f / 1023.0f; }
     float readAngle() override;
     void setTorque(bool on) override;
 

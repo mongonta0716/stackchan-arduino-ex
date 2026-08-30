@@ -39,6 +39,13 @@ public:
     // supportsTimedMove() alone once it has nothing extra to do here.
     virtual void writeTimedMove(float degree, uint32_t /*duration_ms*/) { writeAngle(degree); }
 
+    // Smallest angle (degrees) the servo can actually resolve -- one unit of
+    // its position register. ServoAxis uses this to size a timed move's
+    // segment count so each waypoint advances roughly one real step (a
+    // shorter/slower move then gets more, finer segments). The 0.1 default is
+    // a "fine servo" guess for drivers that don't report a real number.
+    virtual float positionResolutionDeg() const { return 0.1f; }
+
     // Only meaningful for servos that report their own position (currently
     // none in the v1 driver set). Returns NAN when unsupported.
     virtual float readAngle() { return NAN; }

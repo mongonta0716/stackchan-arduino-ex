@@ -1,18 +1,18 @@
 #include "SCEX_ServoAxis.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace SCEX {
 
 namespace {
-// Native firmware-timed moves (Feetech SCS): aim for roughly one easing-curve
-// waypoint every this many milliseconds, clamped to [min, max] segments. A few
-// coarse segments are enough -- the servo interpolates *within* each one at its
-// own internal rate, which is finer and steadier than anything the UART tick
-// can feed.
-constexpr uint32_t kTimedSegmentTargetMs = 150;
-constexpr uint8_t kTimedMinSegments = 1;
-constexpr uint8_t kTimedMaxSegments = 16;
+// Native firmware-timed moves (Feetech SCS): the segment count is adaptive
+// -- ideally one easing-curve waypoint per servo resolution step -- but each
+// segment is kept inside [min, max] ms so a fast move does not flood the bus
+// and a slow move never leaves the servo without a fresh goal for long.
+constexpr uint32_t kTimedMinSegmentMs = 35;
+constexpr uint32_t kTimedMaxSegmentMs = 150;
+constexpr uint8_t kTimedMaxSegments = 128;
 }  // namespace
 
 ServoAxis::ServoAxis(ServoAxisConfig cfg, ServoDriver* driver)
@@ -40,7 +40,9 @@ void ServoAxis::startMove(float target_degree, uint32_t duration_ms) {
     timed_mode_ = false;
     seg_count_ = 0;
     seg_sent_ = 0;
+    seg_emitted_ = 0;
     seg_duration_ms_ = 0;
+    seg_last_quant_ = 0;
     moving_ = true;
 
     if (duration_ms == 0) {
@@ -51,9 +53,22 @@ void ServoAxis::startMove(float target_degree, uint32_t duration_ms) {
     }
 
     if (native_timed_move_ && driver_->supportsTimedMove()) {
-        uint32_t n = duration_ms / kTimedSegmentTargetMs;
-        if (n < kTimedMinSegments) n = kTimedMinSegments;
+        seg_res_deg_ = driver_->positionResolutionDeg();
+        if (!(seg_res_deg_ > 0.0f)) seg_res_deg_ = 0.1f;
+
+        // Aim for ~one servo step per waypoint...
+        float span = std::fabs(target_degree_ - start_degree_);
+        uint32_t n = static_cast<uint32_t>(std::ceil(span / seg_res_deg_));
+        // ...then bound the per-segment time so neither end gets pathological.
+        uint32_t n_lo = (duration_ms + kTimedMaxSegmentMs - 1) / kTimedMaxSegmentMs;
+        uint32_t n_hi = duration_ms / kTimedMinSegmentMs;
+        if (n_lo < 1) n_lo = 1;
+        if (n_hi < 1) n_hi = 1;
+        if (n < n_lo) n = n_lo;
+        if (n > n_hi) n = n_hi;
         if (n > kTimedMaxSegments) n = kTimedMaxSegments;
+        if (n < 1) n = 1;
+
         seg_count_ = static_cast<uint8_t>(n);
         seg_duration_ms_ = duration_ms / seg_count_;
         if (seg_duration_ms_ == 0) seg_duration_ms_ = 1;
@@ -78,14 +93,25 @@ void ServoAxis::update(uint32_t now_ms) {
         current_degree_ = start_degree_ + (target_degree_ - start_degree_) * ease(easing_, t);
 
         // Hand the servo the next waypoint as the current segment runs out,
-        // so it always has a fresh goal + time to interpolate toward.
+        // so it always has a fresh goal + time to interpolate toward. A
+        // deadband skips a waypoint the servo could not resolve from the
+        // previous one; the next real write then carries a goal time
+        // spanning every skipped segment.
         uint32_t want = elapsed / seg_duration_ms_ + 1;
         if (want > seg_count_) want = seg_count_;
         while (seg_sent_ < want) {
             seg_sent_++;
             float seg_t = static_cast<float>(seg_sent_) / static_cast<float>(seg_count_);
             float deg = start_degree_ + (target_degree_ - start_degree_) * ease(easing_, seg_t);
-            driver_->writeTimedMove(deg + cfg_.offset, seg_duration_ms_);
+            int32_t q = static_cast<int32_t>(std::lround(deg / seg_res_deg_));
+            bool is_final = (seg_sent_ == seg_count_);
+            if (seg_emitted_ != 0 && q == seg_last_quant_ && !is_final) {
+                continue;
+            }
+            uint32_t span_ms = static_cast<uint32_t>(seg_sent_ - seg_emitted_) * seg_duration_ms_;
+            driver_->writeTimedMove(deg + cfg_.offset, span_ms);
+            seg_emitted_ = seg_sent_;
+            seg_last_quant_ = q;
         }
 
         if (elapsed >= move_duration_ms_ && seg_sent_ >= seg_count_) {
