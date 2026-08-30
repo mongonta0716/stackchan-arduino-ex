@@ -273,6 +273,15 @@ void FeetechServoDriver::writeAngle(float degree) {
     bus_->writePosition(id_, degreeToRaw(degree), 0);
 }
 
+void FeetechServoDriver::writeTimedMove(float degree, uint32_t duration_ms) {
+    if (bus_ == nullptr) return;
+    degree = std::clamp(degree, static_cast<float>(lower_limit_), static_cast<float>(upper_limit_));
+    // Goal Time (register 44) is a 16-bit millisecond value; clamp the rare
+    // segment longer than ~65s so it does not wrap.
+    uint16_t time_ms = static_cast<uint16_t>(std::min<uint32_t>(duration_ms, 0xFFFFu));
+    bus_->writePosition(id_, degreeToRaw(degree), time_ms, 0);
+}
+
 float FeetechServoDriver::readAngle() {
     if (bus_ == nullptr) return NAN;
     int raw = bus_->readPosition(id_);

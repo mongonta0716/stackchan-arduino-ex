@@ -67,6 +67,12 @@ public:
     // servo power rail on via SCEX_IOExpander before talking to the bus).
     bool attach(const ServoAxisConfig& cfg) override;
     void writeAngle(float degree) override;
+    // SCS servos interpolate "goal position + goal time" in firmware; ServoAxis
+    // uses this to hand off short/slow moves as a few timed segments instead of
+    // flooding the bus with sub-resolution per-tick writes (see writeTimedMove
+    // in the base class).
+    bool supportsTimedMove() const override { return true; }
+    void writeTimedMove(float degree, uint32_t duration_ms) override;
     float readAngle() override;
     void setTorque(bool on) override;
 

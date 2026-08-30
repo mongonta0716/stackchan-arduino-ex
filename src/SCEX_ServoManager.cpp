@@ -83,6 +83,11 @@ void ServoManager::setEasingType(ServoAxisHandle axis, EasingType type) {
     axes_[axis]->setEasingType(type);
 }
 
+void ServoManager::setNativeTimedMove(ServoAxisHandle axis, bool on) {
+    if (axis >= axes_.size()) return;
+    axes_[axis]->setNativeTimedMove(on);
+}
+
 void ServoManager::moveTo(ServoAxisHandle axis, float degree, uint32_t duration_ms,
                            bool wait_for_completion) {
     if (axis >= axes_.size()) return;

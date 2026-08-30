@@ -37,6 +37,9 @@ servo:
       lower_limit: 0
       upper_limit: 300
       easing: quad_in_out         # see docs/api.md for the full easings.net-style list
+      native_timed_move: true     # scs/m5_scs: let the servo interpolate short
+                                  #   slow moves in firmware (stops stutter).
+                                  #   Ignored by pwm axes. Default true.
       i2c_sda: 12                  # PY32IOExpander bus (servo power rail)
       i2c_scl: 11
     - name: y

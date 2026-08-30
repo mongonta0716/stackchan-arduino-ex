@@ -12,10 +12,15 @@ trap 'rm -rf "$OUT_DIR"' EXIT
 
 status=0
 run_test() {
-    local test_name="$1" src_name="$2"
+    local test_name="$1"
+    shift
     echo "=== ${test_name} ==="
+    local srcs=()
+    for src_name in "$@"; do
+        srcs+=("src/${src_name}.cpp")
+    done
     "$CXX" -std=c++17 -Wall -Wextra -Isrc -Itest \
-        "test/${test_name}.cpp" "src/${src_name}.cpp" \
+        "test/${test_name}.cpp" "${srcs[@]}" \
         -o "$OUT_DIR/${test_name}"
     "$OUT_DIR/${test_name}" || status=1
     echo
@@ -23,5 +28,6 @@ run_test() {
 
 run_test test_easing SCEX_Easing
 run_test test_yaml SCEX_Yaml
+run_test test_servo_axis SCEX_ServoAxis SCEX_Easing
 
 exit $status

@@ -71,6 +71,7 @@ ServoAxisHandle findAxis(const std::string& name) const;
 void begin(uint32_t tick_hz = 50);
 
 void setEasingType(ServoAxisHandle axis, EasingType type);  // ★要望(2)のAPI
+void setNativeTimedMove(ServoAxisHandle axis, bool on);     // シリアルサーボのみ
 
 void moveTo(ServoAxisHandle axis, float degree, uint32_t duration_ms = 0,
             bool wait_for_completion = true);
@@ -118,6 +119,21 @@ BackIn / BackOut / BackInOut
 yaml の `easing:` フィールドはスネークケース名（`quad_in_out`, `back_out` 等）で指定し、
 `easingTypeFromName()` で変換されます。
 
+#### ネイティブタイムドムーブ（カクつき対策 / Feetech SCS のみ）
+
+移動量が小さく移動時間が長い場合、20ms ティックごとの書き込み量がサーボの位置分解能
+（SCS0009 は約 0.29°）を下回り、「止まる→1段ジャンプ」を繰り返してカクカクします。
+
+`native_timed_move`（デフォルト有効）を使うと、`ServoAxis` は移動をイージング曲線上の
+数点（約 150ms ごと、最大 16 分割）のウェイポイントに分割し、各区間を SCS の
+「ゴール位置 + ゴール時間」機能でサーボ自身に補間させます。サーボは区間内を内部レートで
+細かく等間隔に刻むため、ガタつきが目立たなくなり、冗長なバス書き込みも消えます。
+
+- PWM 軸では無視されます（`ServoDriver::supportsTimedMove()` が `false`）。
+- yaml: `servo.axes[].native_timed_move: true|false`、実行時: `setNativeTimedMove(axis, on)`。
+- 曲線を厳密に再現したい場合や、区間分割による多角形近似が気になる場合は `false` にすると
+  従来のティック補間に戻ります。
+
 ### 4. `SCEX::ServoDriver` (`SCEX_ServoDriver.h`) / `createServoDriver()`
 
 新しいサーボ種別を追加する際の拡張ポイント。以下を実装するだけで
@@ -129,6 +145,10 @@ class ServoDriver {
     virtual void writeAngle(float degree) = 0;
     virtual float readAngle() { return NAN; }
     virtual void setTorque(bool on) {}
+    // ファーム側で時間指定補間できるサーボ（Feetech SCS）は以下を override する。
+    // 既定は false = ServoAxis がティックごとに writeAngle() を呼ぶ。
+    virtual bool supportsTimedMove() const { return false; }
+    virtual void writeTimedMove(float degree, uint32_t duration_ms) { writeAngle(degree); }
 };
 ```
 

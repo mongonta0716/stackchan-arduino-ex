@@ -39,6 +39,14 @@ public:
     void setEasingType(EasingType type) { easing_ = type; }
     EasingType easingType() const { return easing_; }
 
+    // When the driver supports firmware-side timed moves (Feetech SCS), a
+    // move is handed to the servo as a few easing-curve waypoints, each with
+    // its own goal time, instead of many sub-resolution per-tick writes. This
+    // stops a short, slow move from stuttering. No effect on PWM axes.
+    // Defaults to ServoAxisConfig::native_timed_move (true).
+    void setNativeTimedMove(bool on) { native_timed_move_ = on; }
+    bool nativeTimedMove() const { return native_timed_move_; }
+
     void setTorque(bool on) { driver_->setTorque(on); }
 
     const std::string& name() const { return cfg_.name; }
@@ -48,6 +56,7 @@ private:
     ServoAxisConfig cfg_;
     ServoDriver* driver_;
     EasingType easing_;
+    bool native_timed_move_;
 
     float start_degree_ = 0.0f;
     float target_degree_ = 0.0f;
@@ -55,6 +64,14 @@ private:
     uint32_t move_start_ms_ = 0;
     uint32_t move_duration_ms_ = 0;
     bool moving_ = false;
+
+    // Set while the current move is running as native firmware-timed
+    // segments (see setNativeTimedMove). seg_sent_ counts the waypoints
+    // already handed to the driver; each covers seg_duration_ms_.
+    bool timed_mode_ = false;
+    uint8_t seg_count_ = 0;
+    uint8_t seg_sent_ = 0;
+    uint32_t seg_duration_ms_ = 0;
 };
 
 }  // namespace SCEX

@@ -35,6 +35,12 @@ public:
     // kDefaultEasingType (QuadInOut) if never called.
     void setEasingType(ServoAxisHandle axis, EasingType type);
 
+    // Serial (scs/m5_scs) axes only: enable/disable handing short, slow moves
+    // to the servo's own timed interpolation instead of per-tick writes (see
+    // ServoAxis::setNativeTimedMove). Defaults on, from
+    // ServoAxisConfig::native_timed_move. No effect on PWM axes.
+    void setNativeTimedMove(ServoAxisHandle axis, bool on);
+
     void moveTo(ServoAxisHandle axis, float degree, uint32_t duration_ms = 0,
                 bool wait_for_completion = true);
     // Starts two axes moving in parallel and (optionally) waits for both.

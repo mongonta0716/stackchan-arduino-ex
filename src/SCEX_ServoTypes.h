@@ -37,6 +37,13 @@ struct ServoAxisConfig {
 
     EasingType easing = kDefaultEasingType;
 
+    // Serial servos (scs/m5_scs) only: hand a timed move to the servo's own
+    // "goal position + goal time" interpolation as a few easing-curve
+    // waypoints instead of many sub-resolution per-tick writes. Keeps a
+    // short, slow move from stuttering. Ignored by PWM axes. yaml key:
+    // `native_timed_move` (default true).
+    bool native_timed_move = true;
+
     // m5_scs only: PY32IOExpander I2C address + bus pins, used to switch the
     // servo power rail (VM) on/off.
     bool use_io_expander = false;

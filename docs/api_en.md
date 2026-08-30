@@ -72,6 +72,7 @@ ServoAxisHandle findAxis(const std::string& name) const;
 void begin(uint32_t tick_hz = 50);
 
 void setEasingType(ServoAxisHandle axis, EasingType type);  // the API requested in item (2)
+void setNativeTimedMove(ServoAxisHandle axis, bool on);     // serial servos only
 
 void moveTo(ServoAxisHandle axis, float degree, uint32_t duration_ms = 0,
             bool wait_for_completion = true);
@@ -119,6 +120,24 @@ Falls back to `kDefaultEasingType` (`QuadInOut`) when never set.
 In yaml, use the snake_case name (`quad_in_out`, `back_out`, ...) under
 `easing:`; `easingTypeFromName()` converts it.
 
+#### Native timed move (anti-stutter, Feetech SCS only)
+
+For a small-distance, long-duration move the per-20ms-tick step falls below the
+servo's position resolution (~0.29 deg on the SCS0009), so it repeatedly
+"sits still, then jumps one step" -- visible stutter.
+
+With `native_timed_move` (on by default), `ServoAxis` splits the move into a few
+easing-curve waypoints (~one per 150 ms, up to 16) and lets the servo interpolate
+each segment with its "goal position + goal time" feature. The servo paces its
+own coarse steps evenly across each segment, so the motion reads smoothly and the
+redundant bus writes disappear.
+
+- Ignored on PWM axes (`ServoDriver::supportsTimedMove()` is `false`).
+- yaml: `servo.axes[].native_timed_move: true|false`; runtime:
+  `setNativeTimedMove(axis, on)`.
+- Set it `false` to fall back to per-tick interpolation if the polygonal
+  approximation of the curve matters for your use.
+
 ### 4. `SCEX::ServoDriver` (`SCEX_ServoDriver.h`) / `createServoDriver()`
 
 The extension point for adding a new servo type. Implement this interface
@@ -130,6 +149,10 @@ class ServoDriver {
     virtual void writeAngle(float degree) = 0;
     virtual float readAngle() { return NAN; }
     virtual void setTorque(bool on) {}
+    // Servos that interpolate in firmware (Feetech SCS) override these.
+    // Default false => ServoAxis calls writeAngle() every tick.
+    virtual bool supportsTimedMove() const { return false; }
+    virtual void writeTimedMove(float degree, uint32_t duration_ms) { writeAngle(degree); }
 };
 ```
 

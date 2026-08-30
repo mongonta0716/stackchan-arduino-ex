@@ -128,6 +128,7 @@ void SystemConfig::setSystemConfig(const YamlValue& doc) {
         axis.upper_limit = static_cast<int16_t>(item["upper_limit"].asInt(180));
         axis.start_degree = static_cast<int16_t>(item["start_degree"].asInt(90));
         axis.easing = easingTypeFromName(item["easing"].asString("quad_in_out").c_str());
+        axis.native_timed_move = item["native_timed_move"].asBool(true);
         axis.use_io_expander = (axis.driver_type == DriverType::kM5Scs);
         axis.io_expander_addr = static_cast<uint8_t>(item["io_expander_addr"].asInt(0x6F));
         axis.i2c_sda = static_cast<int>(item["i2c_sda"].asInt(-1));
